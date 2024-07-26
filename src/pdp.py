@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
+import os
 
 # Constants
 DEFAULT_FIGSIZE = (8, 6)
@@ -73,6 +74,21 @@ def pdp(df: pd.DataFrame,
         plot_pdp(result, yname, writefolder, figsize, showbincount, ylim_origin)
 
     return results
+
+# Helper functions (to be implemented)
+def prepare_data(df: pd.DataFrame, feature: str, yname: str) -> pd.DataFrame:
+    """Prepare data for PDP calculation."""
+    return df[[feature, yname]].dropna()
+
+def create_bins(df: pd.DataFrame, feature: str, n: int) -> Tuple[np.ndarray, np.ndarray]:
+    """Create bins for the feature."""
+    bins = np.percentile(df[feature], np.linspace(0, 100, n+1))
+    bin_counts, _ = np.histogram(df[feature], bins)
+    return bins, bin_counts
+
+def is_continuous_variable(bins: np.ndarray) -> bool:
+    """Check if the variable is continuous."""
+    return bins.size == np.unique(bins).size
 
 
 def process_continuous_feature(df: pd.DataFrame, 
@@ -185,8 +201,7 @@ def process_categorical_feature(df: pd.DataFrame,
         bin_counts=bin_counts
     )
 
-from typing import Optional, Tuple
-import os
+
 
 def plot_pdp(result: PDPResult, 
              yname: str, 
@@ -294,7 +309,6 @@ def plot_ice(model, df: pd.DataFrame, feature: str, yname: str, num_lines: int =
     plt.legend()
     plt.show()
 
-import numpy as np
 
 def calculate_feature_importance(pdp_result: PDPResult) -> float:
     """
@@ -336,7 +350,7 @@ def plot_feature_importances(results: List[PDPResult],
     
     plt.figure(figsize=figsize)
     plt.barh(pos, np.array(importances)[sorted_idx])
-    plt.yticks(pos, np.array(features)[sorted_idx])
+    plt.yticks(pos, np.array(features)[sorted_idx]) # type: ignore
     plt.xlabel('Importance')
     plt.title('Feature Importances based on PDP')
     
